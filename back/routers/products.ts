@@ -3,15 +3,21 @@ import mongoDb from "../mongoDb";
 import {ObjectId} from "mongodb";
 import {ProductMutation} from "../types";
 import MongoDb from "../mongoDb";
+import Product from "../models/Product";
+import mongoose from "mongoose";
 
 const productsRouter = express.Router();
 
 productsRouter.get("/", async(req, res, next)=>{
     try{
-        const db = mongoDb.getDb();
-        const products = await db.collection("products").find().toArray();
 
-        return res.send(products)
+        //mongoDb
+        // const db = mongoDb.getDb();
+        // const products = await db.collection("products").find().toArray();
+
+        //Mongoose
+        const products = await Product.find()
+        return res.send(products);
     }catch(error){
         next(error);
     }
@@ -20,9 +26,13 @@ productsRouter.get("/", async(req, res, next)=>{
 
 productsRouter.get("/:id", async(req, res, next)=>{
     try{
-        const id = req.params.id;
-        const db = mongoDb.getDb();
-        const product = await db.collection("products").findOne({_id:new ObjectId(id)})
+        //MongoDb
+        // const id = req.params.id;
+        // const db = mongoDb.getDb();
+        // const product = await db.collection("products").findOne({_id:new ObjectId(id)})
+
+        //Mongoose
+        const product = await Product.findById(req.params.id)
 
         if(product === null){
             return res.status(404).send({error:"Product not found"})
@@ -35,23 +45,30 @@ productsRouter.get("/:id", async(req, res, next)=>{
 })
 
 productsRouter.post("/", async (req, res, next)=>{
+    console.log(req.body.title);
     try {
-        if(!req.body.title || !req.body.price || req.body.category){
-            return res.status(404).send({error:"Product's title or category not found"});
-        }
-
-        const product:ProductMutation = {
-            category : new ObjectId(req.body.category),
+        const ProductMutation:ProductMutation = {
             title:req.body.title,
             description:req.body.description,
         }
 
-        const db = MongoDb.getDb();
-        const result = await db.collection('products').insertOne(product);
+        console.log(ProductMutation);
 
-        return res.send(result.insertedId);
+        //MongoDB
+        // const db = MongoDb.getDb();
+        // const result = await db.collection('products').insertOne(product);
+
+        const product = new Product(ProductMutation);
+        await product.save();
+
+        return res.send(product);
     }catch(error){
+
+        if(error instanceof mongoose.Error.ValidationError){
+            return res.status(400).send(error);
+        }
         next(error);
+
     }
 })
 

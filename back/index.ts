@@ -15,12 +15,13 @@ const port = 8000;
 
 app.use(cors(config.corsOptions));
 app.use(express.json());
+app.use(express.static("public"));
 
-app.use("products", productsRouter);
-
+app.use("/products", productsRouter);
 
 const run = async()=>{
     // await mongoDb.connect()
+
     await mongoose.connect("mongodb://localhost/products");
 
     app.listen(port, ()=>{
